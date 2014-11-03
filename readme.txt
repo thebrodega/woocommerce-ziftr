@@ -6,7 +6,7 @@ This is an extension of  WooCommerce plugin
 
 == Description ==
 
-This plugin Extend Woocoommerce based sites to add the Ziftr features.
+This plugin Extend Woocoommerce based sites with Ziftr features.
 
 				< more description coming.. >
 
