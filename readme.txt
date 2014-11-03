@@ -12,7 +12,7 @@ This plugin Extend Woocoommerce based sites with Ziftr features.
 
 == Installation ==
 
-1. Upload the entire 'woocommerce-ziftr' folder to the '/wp-content/plugins/' directory
+1. Upload the entire 'ziftr-woocommerce' folder to the '/wp-content/plugins/' directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Retrieving the Option value ( Here Ziftr Api ) ==
