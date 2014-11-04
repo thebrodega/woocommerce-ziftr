@@ -43,7 +43,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 				// this is called before the checkout form submit
 				add_action( 'woocommerce_checkout_before_customer_details',array( $this,'woocommerce_checkout_before_customer_details' ) );
 
-				// this handles edit and trash
+				// this handles edit and trash of products
 				add_action( 'save_post',array( $this,'post_product_update' ),10,1 );
 
 				// called after the product/post is trashed
@@ -52,7 +52,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 				// called after the product/post is trashed
 				add_action( 'deleted_post ',array( $this,'trashed_post' ) );
 
-				// adding ziftr checkout after regular woocommerce checkout
+				// adding ziftr checkout along with  regular woocommerce checkout
 				add_filter( 'woocommerce_proceed_to_checkout', array( $this,'add_ziftr_checkout_after_reqular_checkout' ) );
 
 				// called after the order is completed by the admin
@@ -61,7 +61,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 				// gets called when the payement is  completed
 				add_action( 'woocommerce_thankyou',array( $this,'woocommerce_thankyou'),10,1 );
 
-				// this hook is called on the product transition phase, which many transition phases from adding, order pending to  order completion.
+				// this hook is called on the product transition phase, with many transition phases from adding, order pending to  order completion.
 				add_action( 'transition_post_status', array( $this,'transition_post_status' ), 10, 3 );
 
 				/*** getting the information about low stock seee this action hook
@@ -93,6 +93,9 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			 	//write the action after the product is edited in quick mode
 		    }
 
+		    /**
+		    * Do anything on the single product page when its loaded
+		    **/
 		    public function woocommerce_after_single_product(){
 		    	global $post;
 		    	$embed_image = '';
@@ -102,6 +105,9 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		    	echo $embed_image;
 		    }
 
+		    /**
+		    * Do anything on the before the checkout form
+		    **/
 		    public function woocommerce_checkout_before_customer_details( $product ){
 		    	global $woocommerce;
 		    	global $post;
@@ -120,7 +126,10 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		    	echo $embed_checkout_url;
 		    }
 
-		    //this method works for inventory numbers too with $_POST variable
+		    /**
+		    * Do anything when the product is submitted through post
+		    * Uses : $_POST
+		    **/
 		    public function post_product_update( $post_id ){
 		    	if ( wp_is_post_revision( $post_id ) )
 					return;
@@ -158,32 +167,49 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		    	echo "guru";
 		    	?>
 	    		<input type="button"  class ="button ziftr-button" value="Ziftr Checkout" onClick = "javascript:location.href='http://ziftr.com'">
-	     	<?php
+                <?php
 	     	}
+
+	     	/**
+		    * Do anything After the produt order is marked as completed by the admin
+		    * Uses : is_admin() for admin repalted work
+		    **/
 	     	public function woocommerce_order_status_completed( $order_id  ){
 	     		$order = new WC_Order( $order_id );
 	     		// echo "<pre>";print_r( $order ); exit;
 	     	}
 
+	     	/**
+		    * Do anything When the payement is completed, resulting on woocommerece thank you
+		    **/
 	     	public function woocommerce_thankyou( $order_id ){
 	     		$order = new WC_Order( $order_id );
 	     		print_r( $order );
 	     	}
 
-	     	public function transition_post_status( $new_status, $old_status, $post ){
+	     	/**
+		    * Do anything on different product transition phases
+		    * Uses : $new_status, $old_status, $post
+		    **/
+		    public function transition_post_status( $new_status, $old_status, $post ){
 	     		// Here if the new status is publish then the new product is added
 	     		// so based on that  the code if any after new product could be written.
 	     		// this method will help even for the trash , Getting the  product status after the customer makes payement , when the order is coplete etc.
 	     		//echo $new_status;exit;
-
 	     	}
-	     	// Add admin menu under settings
+
+	     	/**
+		    * Add Admin Menu under Settings
+		    **/
 	     	function WC_add_admin_menu() {
 
 				add_options_page( 'Ziftr Extension Page', 'Ziftr Extension Menu', 'manage_options', 'pluginPage', array( $this, 'ziftr_woocommerce_extension_options_page' ) );
 
 			}
-			// check if hte WC_settings_exists
+
+			/**
+		    * Check if hte settings exists
+		    **/
 			function WC_settings_exist() {
 
 				if( false == get_option( array( $this, 'ziftr_woocommerce_extension_settings') ) ) {
@@ -191,10 +217,11 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 					add_option( 'ziftr_woocommerce_extension_settings' );
 
 				}
-
 			}
 
-			// add admin settings
+			/**
+		    * Admin Settings init
+		    **/
 			function WC_settings_init() {
 
 				register_setting( 'pluginPage', 'WC_ziftr_settings' );
@@ -205,18 +232,17 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 
 				//example for dummy setting field
 				add_settings_field('WC_ziftr_dummy_field', 'Enter the Dummy Option Here:', array( $this, 'WC_ziftr_dummy_field_render' ), 'pluginPage', 'WC_pluginPage_section' );
+			}
 
-
-				}
-
-			// Rendering the saved Option
+			/**
+		    * Rendering Saved Options for first setting option
+		    **/
 			function WC_ziftr_api_field_render() {
 
 				$options = get_option( 'WC_ziftr_settings' );
 				?>
 				<input type='text' name='WC_ziftr_settings[WC_ziftr_api_field]' value='<?php echo $options['WC_ziftr_api_field']; ?>'>
 				<?php
-
 			}
 
 			// Rendering the saved Option
@@ -228,14 +254,16 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 				<?php
 			}
 
-			// Settings Callbck
+
 			function WC_settings_section_callback() {
 
 				echo "Please write the setting instructions for the API here";
 
 			}
 
-			// Options/Setting page
+			/**
+		    * Setting Page
+		    **/
 			function ziftr_woocommerce_extension_options_page(  ) {
 
 				if( !current_user_can( 'manage_options' ) )
@@ -252,16 +280,20 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 					?>
 				</form>
 				<?php
-
 			}
 	    }
-	    // Installation and uninstallation hooks
+
+	    /**
+		* Registering Hooks
+		**/
     	register_activation_hook( __FILE__, array( 'WC_Ziftr', 'activate' ) );
 
     	register_deactivation_hook( __FILE__, array( 'WC_Ziftr', 'deactivate' ) );
 
-    	//instntiate the class
-    	$GLOBALS['wc_ziftr'] = new WC_Ziftr();
+    	/**
+		* instntiating Class
+		**/
+		$GLOBALS['wc_ziftr'] = new WC_Ziftr();
     }//END if ( !class_exists( WC_Ziftr ) )
 }
 ?>
