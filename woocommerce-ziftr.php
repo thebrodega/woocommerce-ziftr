@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: WooCommerce Ziftr
+Plugin Name: Ziftr for WooCommerce
 Plugin URI: http://www.ziftr.com/
-Description: Custom plugin to extend the woocommerce functionality
-Author: Guru Subedi
+Description: Bring Ziftr platform and ziftrPAY functionality to WooCommerce
+Author: Ziftr and contributors
 Author URI: http://www.ziftr.com
-Version: 1.0.0
+Version: 0.1.0
 
-	Copyright: © 2014 ziftr.com
+	Copyright: © 2014-2015 Ziftr, LLC
 	License: GNU General Public License v3.0
 	License URI: http://www.gnu.org
 */
