@@ -6,14 +6,8 @@ This branch is under active development and should not be considered stable for 
 
 ## Installation
 
-1. Upload the entire `ziftr-woocommerce` folder to the `/wp-content/plugins/` directory
+1. Upload the entire `woocommerce-ziftr` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the "Plugins" menu in WordPress
-
-## Retrieving option values
-
-```php
-get_option( 'WC_ziftr_settings' );
-```
 
 ## Links
 * [Ziftr API Client for PHP on Github](http://github.com/ziftr/ziftr-api-client-php/)
