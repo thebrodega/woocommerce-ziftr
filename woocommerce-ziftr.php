@@ -95,12 +95,12 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			 */
 			public function get_icon() {
 
-				$icon = '';
-				$url  = '';
+				$icon = plugins_url('/assets/images/AC_vs_mc_am_dc_zrc_tc_doge_ltc.png',__FILE__);
+				$url  = 'https://www.ziftrpay.com/shoppers/';
 
-				$html .= '<img src="' . esc_attr( $i ) . '" alt="' . __( 'ZiftrPAY accepts credit card and cryptocurrency', 'woocommerce' ) . '" />';
+				$html .= '<img src="' . esc_attr( $icon ) . '" alt="' . __( 'ZiftrPAY accepts credit card and cryptocurrency', 'woocommerce' ) . '" />';
 
-				$html .= sprintf( '<a href="%1$s" class="about_paypal" onclick="javascript:window.open(\'%1$s\',\'WIZiftrpay\',\'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=1060, height=700\'); return false;" title="' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '">' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '</a>', esc_url( $url ) );
+				$html .= sprintf( '<a href="%1$s" class="about_ziftrpay" onclick="javascript:window.open(\'%1$s\',\'WIZiftrpay\',\'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=400, height=700\'); return false;" title="' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '">' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '</a>', esc_url( $url ) );
 
 				return apply_filters( 'woocommerce_gateway_icon', $html, $this->id );
 			}
