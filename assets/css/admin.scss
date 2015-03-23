@@ -1,0 +1,18 @@
+/**
+ * admin.scss
+ */
+
+.ziftrpay-banner {
+	overflow: hidden;
+
+	img {
+		float: right;
+		padding: 15px 0;
+		margin-left: 1em;
+		height: 120px;
+	}
+
+	&.updated {
+		border-color: #574e69;
+	}
+}

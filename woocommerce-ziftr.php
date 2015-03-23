@@ -19,270 +19,175 @@ if ( ! defined( 'ABSPATH' ) ) {
 //check if woocommerce is active
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 	if( !class_exists( 'WC_Ziftr' ) ){
-		class WC_Ziftr
+		class WC_Ziftr extends WC_Payment_Gateway
 		{
 
 			public function __construct()
 			{
-				// adding admin settings
-				add_action( 'admin_init', array( $this, 'WC_settings_init' ) );
-
-				// adding admin menu
-				add_action( 'admin_menu', array( $this, 'WC_add_admin_menu') );
-
-				// gets called only after woocommerce has finished loading
-				add_action( 'woocommerce_init', array( &$this, 'woocommerce_loaded' ) );
-
-				// this is called after the bulk edit is saved
-				add_action( 'woocommerce_product_bulk_edit_save' , array( $this,'woocommerce_product_quick_edit_save' ) );
-
-				// this is called after the quick edit is saved
-				add_action( 'woocommerce_product_quick_edit_save',array( $this,'woocommerce_product_quick_edit_save' ) );
-
-				// this is called on the single product page
-				add_action( 'woocommerce_after_single_product',array( $this,'woocommerce_after_single_product' ) );
-
 				// this is called before the checkout form submit
 				add_action( 'woocommerce_checkout_before_customer_details',array( $this,'woocommerce_checkout_before_customer_details' ) );
-
-				// this handles edit and trash of products
-				add_action( 'save_post',array( $this,'post_product_update' ),10,1 );
-
-				// called after the product/post is trashed
-				add_action( 'trashed_post',array( $this,'trashed_post' ) );
-
-				// called after the product/post is trashed
-				add_action( 'deleted_post ',array( $this,'trashed_post' ) );
 
 				// adding ziftr checkout along with  regular woocommerce checkout
 				add_filter( 'woocommerce_proceed_to_checkout', array( $this,'add_ziftr_checkout_after_reqular_checkout' ) );
 
-				// called after the order is completed by the admin
-				add_action( 'woocommerce_order_status_completed',array( $this,'woocommerce_order_status_completed' ),10,1 );
+				$this->id                 = 'ziftrpay';
+				$this->has_fields         = false;
+				$this->order_button_text  = __( 'Proceed to ZiftrPAY', 'woocommerce' );
+				$this->method_title       = __( 'ZiftrPAY', 'woocommerce' );
+				$this->method_description = __( 'ZiftrPAY works by sending customers to ZiftrPAY where they can enter their payment information and pay with credit card or cryptocurrency.', 'woocommerce' );
+				$this->supports           = array(
+								'products'
+							    );
 
-				// gets called when the payement is  completed
-				add_action( 'woocommerce_thankyou',array( $this,'woocommerce_thankyou'),10,1 );
+				// Load the settings.
+				$this->init_form_fields();
+				$this->init_settings();
 
-				// this hook is called on the product transition phase, with many transition phases from adding, order pending to  order completion.
-				add_action( 'transition_post_status', array( $this,'transition_post_status' ), 10, 3 );
+				// Define user set variables
+				$this->title               = $this->get_option( 'title' );
+				$this->description         = $this->get_option( 'description' );
+				$this->show_above_checkout = 'yes' === $this->get_option( 'show_above_checkout', 'yes' );
+				$this->show_on_cart        = 'yes' === $this->get_option( 'show_on_cart', 'yes' );
+				$this->sandbox             = 'yes' === $this->get_option( 'api_sandbox', 'no' );
+				$this->publishable_key     = $this->get_option( 'api_publishable_key' );
+				$this->private_key         = $this->get_option( 'api_private_key' );
 
-				/*** getting the information about low stock seee this action hook
-				 * woocommerce_low_stock
-				 ***/
+				add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+
+				if ( ! $this->is_valid_for_use() ) {
+					$this->enabled = 'no';
+				}
+
 			}
+
 			/**
-			 * Activate the Plugin
+			 * Logging method
+			 * @param  string $message
 			 */
-			public static function activate(){
-
-			}
-
-			/**
-			 * Deactivate the Plugin
-			 */
-			public static function deactivate(){
-
-			}
-			/**
-			 * do anything after woocommerce is loaded
-			 */
-			public function woocommerce_loaded( $product ) {
-				//code if needed after the woocommerce is loaded.
-			}
-
-			public function woocommerce_product_quick_edit_save(){
-
-				//write the action after the product is edited in quick mode
-			}
-
-			/**
-			 * Do anything on the single product page when its loaded
-			 **/
-			public function woocommerce_after_single_product(){
-				global $post;
-				$embed_image = '';
-				if( get_permalink( $post->ID ) )
-					$embed_image = '<img src='.get_permalink( $post->ID ).'>';
-				echo " Embed a <img> tag on every product page with some arguments saying what the product is <br />";
-				echo $embed_image;
+			public function log( $message ) {
+				if ( $this->debug ) {
+					if ( empty( $this->log ) ) {
+						$this->log = new WC_Logger();
+					}
+					$this->log->add( 'ziftrpay', $message );
+				}
 			}
 
 			/**
 			 * Do anything on the before the checkout form
 			 **/
 			public function woocommerce_checkout_before_customer_details( $product ){
-				global $woocommerce;
-				global $post;
-				$checkout_url = get_permalink( $post->ID );
-				$product_title = "";
-				$embed_checkout_url ="";
-				$items = $woocommerce->cart->get_cart();
-				foreach( $items as $item => $values ){
-					$item_product = $values['data']->post;
-					//echo "<pre>"; print_r( $item_product );
-					$product_title .= $item_product->post_title.'&';
+				if ( $this->show_above_checkout ) {
+					echo '<div class="woocommerce-info ziftrpay-info">Have a ZiftrPAY account? Use your saved details and skip the line <a href="#">Click here to checkout with ZiftrPAY</a></div>';
 				}
-				$embed_checkout_url .= $checkout_url.'?'.$product_title;
-				$embed_checkout_url = '<img src='.$embed_checkout_url.'>';
-				echo "Embed a <img> tag on every checkout page with some arguments about the checkout <br />";
-				echo $embed_checkout_url;
-			}
-
-			/**
-			 * Do anything when the product is submitted through post
-			 * Uses : $_POST
-			 **/
-			public function post_product_update( $post_id ){
-				if ( wp_is_post_revision( $post_id ) )
-					return;
-				global $post_type;
-				//global $post;
-				global $action;
-				//apply this for only post type with product
-				if( $post_type == 'product' ){
-					//print_r($_POST);exit;
-					// $post_title = get_the_title( $post_id );
-
-					// $post_url = get_permalink( $post_id );
-					if( !empty( $action ) ){
-						switch ( $action ) {
-							case "editpost":
-								echo "editing post";
-								break;
-							case "trash":
-								$this->trashed_post();
-								break;
-						}
-					}
-				}
-			}
-
-			public function trashed_post(){
-				// echo "after trashed"; exit;
 			}
 
 			public function add_ziftr_checkout_after_reqular_checkout(){
-				global $woocommerce;
-				global $options;
-				// echo "<pre >"; print_r( $woocommerce->cart );
-				// echo "<pre >"; print_r( $woocommerce->cart->subtotal_ex_tax );
-				print_r( $options );
-				echo "guru";
-				?>
-					<input type="button"  class ="button ziftr-button" value="Ziftr Checkout" onClick = "javascript:location.href='http://ziftr.com'">
-					<?php
-			}
-
-			/**
-			 * Do anything After the produt order is marked as completed by the admin
-			 * Uses : is_admin() for admin repalted work
-			 **/
-			public function woocommerce_order_status_completed( $order_id  ){
-				$order = new WC_Order( $order_id );
-				// echo "<pre>";print_r( $order ); exit;
-			}
-
-			/**
-			 * Do anything When the payement is completed, resulting on woocommerece thank you
-			 **/
-			public function woocommerce_thankyou( $order_id ){
-				$order = new WC_Order( $order_id );
-				print_r( $order );
-			}
-
-			/**
-			 * Do anything on different product transition phases
-			 * Uses : $new_status, $old_status, $post
-			 **/
-			public function transition_post_status( $new_status, $old_status, $post ){
-				// Here if the new status is publish then the new product is added
-				// so based on that  the code if any after new product could be written.
-				// this method will help even for the trash , Getting the  product status after the customer makes payement , when the order is coplete etc.
-				//echo $new_status;exit;
-			}
-
-			/**
-			 * Add Admin Menu under Settings
-			 **/
-			function WC_add_admin_menu() {
-
-				add_options_page( 'Ziftr Extension Page', 'Ziftr Extension Menu', 'manage_options', 'pluginPage', array( $this, 'ziftr_woocommerce_extension_options_page' ) );
-
-			}
-
-			/**
-			 * Check if hte settings exists
-			 **/
-			function WC_settings_exist() {
-
-				if( false == get_option( array( $this, 'ziftr_woocommerce_extension_settings') ) ) {
-
-					add_option( 'ziftr_woocommerce_extension_settings' );
-
+				if ( $this->show_on_cart ) {
+					echo '<a href="#" class="checkout-button button alt wc-forward">Checkout using ZiftrPAY</a>';
 				}
 			}
 
 			/**
-			 * Admin Settings init
-			 **/
-			function WC_settings_init() {
+			 * get_icon function.
+			 *
+			 * @return string
+			 */
+			public function get_icon() {
 
-				register_setting( 'pluginPage', 'WC_ziftr_settings' );
+				$icon = '';
+				$url  = '';
 
-				add_settings_section( 'WC_pluginPage_section', 'Main Settings', array( $this, 'WC_settings_section_callback' ),'pluginPage' );
+				$html .= '<img src="' . esc_attr( $i ) . '" alt="' . __( 'ZiftrPAY accepts credit card and cryptocurrency', 'woocommerce' ) . '" />';
 
-				add_settings_field('WC_ziftr_api_field', 'Enter the API here:', array( $this, 'WC_ziftr_api_field_render' ), 'pluginPage', 'WC_pluginPage_section' );
+				$html .= sprintf( '<a href="%1$s" class="about_paypal" onclick="javascript:window.open(\'%1$s\',\'WIZiftrpay\',\'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=1060, height=700\'); return false;" title="' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '">' . esc_attr__( 'What is ZiftrPAY?', 'woocommerce' ) . '</a>', esc_url( $url ) );
 
-				//example for dummy setting field
-				add_settings_field('WC_ziftr_dummy_field', 'Enter the Dummy Option Here:', array( $this, 'WC_ziftr_dummy_field_render' ), 'pluginPage', 'WC_pluginPage_section' );
+				return apply_filters( 'woocommerce_gateway_icon', $html, $this->id );
 			}
 
 			/**
-			 * Rendering Saved Options for first setting option
-			 **/
-			function WC_ziftr_api_field_render() {
-
-				$options = get_option( 'WC_ziftr_settings' );
-				?>
-					<input type='text' name='WC_ziftr_settings[WC_ziftr_api_field]' value='<?php echo $options['WC_ziftr_api_field']; ?>'>
-					<?php
-			}
-
-			// Rendering the saved Option
-			function WC_ziftr_dummy_field_render(){
-
-				$options = get_option( 'WC_ziftr_settings' );
-				?>
-					<input type='text' name='WC_ziftr_settings[WC_ziftr_dummy_field]' value='<?php echo $options['WC_ziftr_dummy_field']; ?>'>
-					<?php
-			}
-
-
-			function WC_settings_section_callback() {
-
-				echo "Please write the setting instructions for the API here";
-
+			 * Check if this gateway is enabled and available in the user's country
+			 *
+			 * @return bool
+			 */
+			public function is_valid_for_use() {
+				return in_array( get_woocommerce_currency(), apply_filters( 'woocommerce_ziftrpay_supported_currencies', array( 'USD' ) ) );
 			}
 
 			/**
-			 * Setting Page
-			 **/
-			function ziftr_woocommerce_extension_options_page(  ) {
-
-				if( !current_user_can( 'manage_options' ) )
-
-					wp_die( 'You dont have the required permission to access this page' );
-
+			 * Admin Panel Options
+			 * - Options for bits like 'title' and availability on a country-by-country basis
+			 *
+			 * @since 1.0.0
+			 */
+			public function admin_options() {
+				if ( $this->is_valid_for_use() ) {
 				?>
-					<form action='options.php' method='post'>
-					<h2>Ziftr Plugin Settings</h2>
-					<?php
-					settings_fields( 'pluginPage' );
-					do_settings_sections( 'pluginPage' );
-					submit_button();
+					<h3><?php __( 'ZiftrPAY', 'woocommerce' ); ?></h3>
+
+					<?php if ( empty( $this->publishable_key ) && empty( $this->private_key ) ) : ?>
+						<div class="ziftrpay-banner updated">
+							<img src="<?php echo plugins_url('/assets/images/admin_logo.png',__FILE__); ?>" />
+							<p class="main"><strong><?php _e( 'Getting started', 'woocommerce' ); ?></strong></p>
+							<p><?php _e( 'ZiftrPAY is a platform that enabled you to offer your customers more choice by accepting both credit card and cryptocurrency.', 'woocommerce' ); ?></p>
+
+							<p><a href="https://www.ziftrpay.com/merchants/register/" target="_blank" class="button button-primary"><?php _e( 'Sign up for ZiftrPAY', 'woocommerce' ); ?></a> <a href="https://www.ziftrpay.com/" target="_blank" class="button"><?php _e( 'Learn more', 'woocommerce' ); ?></a></p>
+
+						</div>
+					<?php else : ?>
+						<p><?php _e( 'ZiftrPAY is a platform that enabled you to offer your customers more choice by accepting both credit card and cryptocurrency.', 'woocommerce' ); ?></p>
+					<?php endif; ?>
+					<table class="form-table">
+				<?php
+						$this->generate_settings_html();
+				?>
+					</table>	
+				<?php
+				} else {
 					?>
-					</form>
+					<div class="inline error"><p><strong><?php _e( 'Gateway Disabled', 'woocommerce' ); ?></strong>: <?php _e( 'ZiftrPAY does not support your store currency at this time.', 'woocommerce' ); ?></p></div>
 					<?php
+				}
+			}
+
+			/**
+			 * Initialise Gateway Settings Form Fields
+			 */
+			public function init_form_fields() {
+				$this->form_fields = include( 'includes/settings-ziftrpay.php' );
+			}
+
+			/**
+			 * Get the transaction URL.
+			 *
+			 * @param  WC_Order $order
+			 *
+			 * @return string
+			 */
+			public function get_transaction_url( $order ) {
+				if ( $this->testmode ) {
+					$this->view_transaction_url = 'https://www.sandbox.ziftrpay.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+				} else {
+					$this->view_transaction_url = 'https://www.ziftrpay.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+				}
+				return parent::get_transaction_url( $order );
+			}
+
+			/**
+			 * Process the payment and return the result
+			 *
+			 * @param int $order_id
+			 * @return array
+			 */
+			public function process_payment( $order_id ) {
+				include_once( 'includes/class-wc-gateway-ziftrpay-order.php' );
+
+				$order          = wc_get_order( $order_id );
+
+				return array(
+						'result'   => 'success',
+						'redirect' => $ziftrpay_order->get_checkout_url( $order, $this->sandbox )
+					    );
 			}
 		}
 
@@ -297,5 +202,17 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		 * instntiating Class
 		 **/
 		$GLOBALS['wc_ziftr'] = new WC_Ziftr();
+
+		function add_ziftrpay( $methods ) {
+			$methods[] = 'WC_Ziftr'; 
+			return $methods;
+		}
+
+		add_filter( 'woocommerce_payment_gateways', 'add_ziftrpay' );
+
+		wp_register_style( 'wc-ziftr-admin', plugins_url( '/assets/css/admin.css', __FILE__ ) );
+		wp_enqueue_style( 'wc-ziftr-admin' );
+		
+
 	}//END if ( !class_exists( WC_Ziftr ) )
 }
