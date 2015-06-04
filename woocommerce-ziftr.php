@@ -22,6 +22,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		class WC_Ziftr extends WC_Settings_API
 		{
 
+			public $plugin_id = "woocommerce_ziftrpay";
+
 			public function __construct()
 			{
 				// this is called before the checkout form submit
@@ -36,12 +38,27 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 				$this->show_above_checkout = 'yes' === $this->get_option( 'show_above_checkout', 'yes' );
 				$this->show_on_cart        = 'yes' === $this->get_option( 'show_on_cart', 'yes' );
 				$this->sandbox             = 'yes' === $this->get_option( 'api_sandbox', 'no' );
-				$this->publishable_key     = $this->get_option( 'api_publishable_key' );
+				$this->publishable_key     = $this->get_option( 'api_publishable_key');
 				$this->private_key         = $this->get_option( 'api_private_key' );
 
 				add_filter( 'woocommerce_payment_gateways', array( $this,'add_ziftrpay' ) );
 
 			}
+
+
+			public function get_configuration() {
+				$configuration = new \Ziftr\ApiClient\Configuration();
+
+				$configuration->load_from_array(array(
+							'host'            => ($this->sandbox ? 'sandbox' : 'api' ) . '.fpa.bz',
+							'port'            => 443,
+							'private_key'     => $this->private_key,
+							'publishable_key' => $this->publishable_key
+							));
+
+				return $configuration;
+			}
+
 
 			/**
 			 * Add ZiftrPAY as a gateway
@@ -70,14 +87,29 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			 **/
 			public function woocommerce_checkout_before_customer_details( $product ){
 				if ( $this->show_above_checkout ) {
-					echo '<div class="woocommerce-info ziftrpay-info">Have a ZiftrPAY account? Use your saved details and skip the line <a href="#">Click here to checkout with ZiftrPAY</a></div>';
+					echo '<div class="woocommerce-info ziftrpay-info">Have a ZiftrPAY account? Use your saved details and skip the line <a href="' . $this->redirect_url() . '">Click here to checkout with ZiftrPAY</a></div>';
 				}
 			}
 
 			public function add_ziftr_checkout_after_reqular_checkout(){
 				if ( $this->show_on_cart ) {
-					echo '<a href="#" class="checkout-button button alt wc-forward">Checkout using ZiftrPAY</a>';
+					$redirecturl = $this->redirect_url();
+					echo '<a href="' . $redirecturl . '" class="checkout-button button alt wc-forward">Checkout using ZiftrPAY</a>';
 				}
+			}
+
+			public function redirect_url() {
+				return plugins_url( '/cart-redirect.php', __FILE__ );
+			}
+
+			public function redirect_cart() {
+				include('includes/class-wc-gateway-ziftrpay-order.php');
+
+ 				$configuration = $this->get_configuration();
+				$order = WC_Gateway_Ziftrpay_Order::from_cart(WC()->cart, $configuration);
+
+				wp_redirect($order->get_checkout_url());
+				exit;
 			}
 
 		}

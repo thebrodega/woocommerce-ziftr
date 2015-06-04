@@ -1,0 +1,66 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "dfc0779975f01a3c4e49b0654718d4ab",
+    "packages": [
+        {
+            "name": "ziftr/api-client",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Ziftr/ziftr-api-client-php.git",
+                "reference": "0312afdaca9d5680aed3e9850eefa7a9c54ddc0d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Ziftr/ziftr-api-client-php/zipball/0312afdaca9d5680aed3e9850eefa7a9c54ddc0d",
+                "reference": "0312afdaca9d5680aed3e9850eefa7a9c54ddc0d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Ziftr\\": "lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ziftr and contributors",
+                    "homepage": "https://github.com/ziftr/fpa-php/contributors"
+                }
+            ],
+            "description": "Ziftr API PHP Client Bindings",
+            "homepage": "http://www.ziftr.com/",
+            "keywords": [
+                "api",
+                "cryptocurrency",
+                "ecommerce",
+                "ziftr",
+                "ziftrpay"
+            ],
+            "time": "2015-05-08 18:20:50"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "ziftr/api-client": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=5.3"
+    },
+    "platform-dev": []
+}

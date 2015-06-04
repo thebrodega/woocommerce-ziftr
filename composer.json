@@ -1,0 +1,23 @@
+{
+  "name": "ziftr/woo-plugin",
+  "description": "ZiftrPAY Woo Commerce Plugin",
+  "keywords": [
+    "ziftr",
+    "ziftrpay",
+    "ecommerce",
+    "cryptocurrency",
+    "woo"
+  ],
+  "homepage": "http://www.ziftrpay.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ziftr and contributors",
+      "homepage": "https://github.com/ziftr/woo/contributors"
+    }
+  ],
+  "require": {
+    "ziftr/api-client": "dev-master",
+    "php": ">=5.3"
+  }
+}

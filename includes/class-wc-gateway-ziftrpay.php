@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
+if ( !class_exists('WC_Ziftrpay_Gateway') ) {
+
 class WC_Ziftrpay_Gateway extends WC_Payment_Gateway
 {
 
@@ -116,14 +118,13 @@ class WC_Ziftrpay_Gateway extends WC_Payment_Gateway
 	 *
 	 * @return string
 	 */
+	/*
 	public function get_transaction_url( $order ) {
-		if ( $this->testmode ) {
-			$this->view_transaction_url = 'https://www.sandbox.ziftrpay.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
-		} else {
-			$this->view_transaction_url = 'https://www.ziftrpay.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
-		}
+		// todo: grab the transaction URL to the admin area on ZiftrPAY
+
 		return parent::get_transaction_url( $order );
 	}
+	*/
 
 	/**
 	 * Process the payment and return the result
@@ -141,5 +142,7 @@ class WC_Ziftrpay_Gateway extends WC_Payment_Gateway
 				'redirect' => $ziftrpay_order->get_checkout_url( $order, $this->sandbox )
 			    );
 	}
+
+}
 
 }
