@@ -16,6 +16,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
+/** Required functions **/
+
+ 	$root = $_SERVER['DOCUMENT_ROOT'];
+	require_once( $root.'/wp-content/plugins/woocommerce/includes/abstracts/abstract-wc-settings-api.php' );
+
 //check if woocommerce is active
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 	if( !class_exists( 'WC_Ziftr' ) ){
