@@ -133,7 +133,7 @@ class WC_Ziftrpay_Gateway extends WC_Payment_Gateway
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		include_once( 'includes/class-wc-gateway-ziftrpay-order.php' );
+		include_once( 'class-wc-gateway-ziftrpay-order.php' );
 
 		$order          = wc_get_order( $order_id );
 
