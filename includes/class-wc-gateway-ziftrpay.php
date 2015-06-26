@@ -139,7 +139,7 @@ class WC_Ziftrpay_Gateway extends WC_Payment_Gateway
 
 		return array(
 				'result'   => 'success',
-				'redirect' => $ziftrpay_order->get_checkout_url( $order, $this->sandbox )
+				'redirect' => $order -> get_checkout_payment_url()
 			    );
 	}
 
